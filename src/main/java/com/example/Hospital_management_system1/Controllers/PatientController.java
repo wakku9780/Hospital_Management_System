@@ -1,17 +1,16 @@
-package com.example.Hospital_management_system1;
+package com.example.Hospital_management_system1.Controllers;
 
+import com.example.Hospital_management_system1.Models.Doctor;
+import com.example.Hospital_management_system1.Models.Patient;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/patient")
 public class PatientController {
-    HashMap<Integer,Patient> patientDb = new HashMap<>();
+    HashMap<Integer, Patient> patientDb = new HashMap<>();
     @PostMapping("/addviaParamaters")
-
     public String addPatient(@RequestParam("patientId")Integer patientId,@RequestParam("name")String name,@RequestParam("age")Integer age,@RequestParam("disease")String disease){
         Patient patient = new Patient(patientId,name,disease,age);
         patientDb.put(patientId,patient);
@@ -86,6 +85,48 @@ public class PatientController {
         return patients;
 
     }
+    @GetMapping("/getPatientsWithNoDisease")
+    public List<Patient> getPatientsWithNoDisease() {
+        List<Patient> patients = new ArrayList<>();
+        for (Patient p : patientDb.values()) {
+            if (p.getDisease() == null || p.getDisease().isEmpty()) {
+                patients.add(p);
+            }
+        }
+        return patients;
+    }
+    @GetMapping("/countPatientsByDisease")
+    public HashMap<String, Integer> countPatientsByDisease() {
+        HashMap<String, Integer> diseaseCount = new HashMap<>();
+        for (Patient p : patientDb.values()) {
+            String disease = p.getDisease();
+            if (disease != null && !disease.isEmpty()) {
+                diseaseCount.put(disease, diseaseCount.getOrDefault(disease, 0) + 1);
+            }
+        }
+        return diseaseCount;
+    }
+    @GetMapping("/getAllPatientsSortedByName")
+    public List<Patient> getAllPatientsSortedByName() {
+        List<Patient> patients = new ArrayList<>(patientDb.values());
+        patients.sort(Comparator.comparing(Patient::getName));
+        return patients;
+    }
+
+
+
+
+    @GetMapping("/getPatientsByAgeRange")
+    public List<Patient>  getPatientsByAgeRange(@RequestParam("minAge")Integer minAge,@RequestParam("maxAge")Integer maxAge){
+        List<Patient>patients = new ArrayList<>();
+        for(Patient p:patientDb.values()){
+            if(p.getAge()>=minAge && p.getAge()<=maxAge){
+                patients.add(p);
+            }
+        }
+
+        return patients;
+    }
 
     @PutMapping("/updatePatientsDetail")
 
@@ -98,6 +139,25 @@ public class PatientController {
         }
         else return "Does not exist data";
     }
+
+//    @PutMapping("/transferPatient")
+//    public String transferPatient(@RequestParam("patientId") Integer patientId, @RequestParam("newDoctorId") Integer newDoctorId) {
+//        // Assume you have a Doctor class and a doctorDb HashMap<Integer, Doctor>
+//        // to store information about doctors.
+//
+//        if (patientDb.containsKey(patientId) && doctorDb.containsKey(newDoctorId)) {
+//            Patient patient = patientDb.get(patientId);
+//            Doctor newDoctor = doctorDb.get(newDoctorId);
+//
+//            // Additional logic for transferring patient, updating doctor-patient relationships, etc.
+//            // ...
+//
+//            return "Patient transferred successfully to Dr. " + newDoctor.getName();
+//        } else {
+//            return "Patient or Doctor does not exist";
+//        }
+//    }
+
 
     @PutMapping("/updateDisease")
 
@@ -112,6 +172,20 @@ public class PatientController {
         }
         else return "patient does not exist";
 
+    }
+
+    @PutMapping("/updatePatientName")
+
+    public String updateName(@RequestParam("patientId")Integer patientId,@RequestParam("name")String newName){
+        if(patientDb.containsKey(patientId)){
+            Patient patient =patientDb.get(patientId);
+            patient.setName(newName);
+            patientDb.put(patientId,patient);
+
+            return "Updated name successfully";
+        }
+
+        return "Patient does not exist";
     }
 
     @DeleteMapping("/deletePatient")
